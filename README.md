@@ -48,14 +48,25 @@ Alternative to the manual npm setup above — builds both services with multi-st
 ```bash
 docker compose build
 docker compose up -d
-docker compose exec server npx tsx prisma/seed.ts   # seed on first run
 ```
+
+The server container seeds itself automatically on first boot (only when the `User` table is empty) — no manual step needed. Subsequent restarts detect existing data and skip seeding, so your documents are never wiped.
 
 Server: http://localhost:4000, Client: http://localhost:5173. SQLite data persists in the `server-data` named volume across restarts (`docker compose down -v` to wipe it). Stop with `docker compose down`.
 
 ## Supported file import types
 
 Only `.txt` and `.md` files (max 2MB) can be imported. Markdown headings, bold/italic, and bullet/numbered lists are converted to the equivalent rich-text formatting; plain text is imported as one paragraph per line. Any other file type is rejected with an error message in the UI.
+
+## API testing (Postman)
+
+Import [`ajaia-docs.postman_collection.json`](./ajaia-docs.postman_collection.json) into Postman. It covers every route (`auth`, `users`, `documents` CRUD, import, sharing). Workflow:
+
+1. Run **Auth → List Users** — saves the first two seeded users' ids into `userId` / `otherUserId` collection variables.
+2. Run **Auth → Login** — saves the returned JWT into the `token` variable; every other request is pre-configured to send it as a Bearer token.
+3. Run **Documents → Create Document** — saves the new id into `documentId`, used by the rest of the Documents/Sharing requests.
+
+`baseUrl` defaults to `http://localhost:4000` — change the collection variable to point at a deployed backend.
 
 ## Running tests
 

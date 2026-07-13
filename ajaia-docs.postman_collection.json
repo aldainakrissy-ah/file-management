@@ -1,0 +1,224 @@
+{
+  "info": {
+    "name": "Ajaia Docs API",
+    "description": "REST API for the Ajaia Docs collaborative document editor. Set `baseUrl` to your server (default http://localhost:4000). Run \"Login\" first — it auto-saves the JWT into `token` for every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "ajaia-docs-api-collection"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "documentId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "otherUserId", "value": "", "type": "string" },
+    { "key": "otherUserEmail", "value": "bob@ajaia.dev", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "auth": { "type": "noauth" }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "List Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const users = pm.response.json();",
+                  "if (Array.isArray(users) && users.length > 0) {",
+                  "  pm.collectionVariables.set('userId', users[0].id);",
+                  "  if (users.length > 1) pm.collectionVariables.set('otherUserId', users[1].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users",
+            "auth": { "type": "noauth" }
+          },
+          "description": "Seeded users for the mock login picker. Saves the first user's id into `userId` for convenience."
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            }
+          },
+          "description": "Mocked login — no password. Run \"List Users\" first to populate `userId`. Saves the returned JWT into `token`."
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/documents",
+            "description": "Returns { owned: [...], shared: [...] } for the authenticated user."
+          }
+        },
+        {
+          "name": "Create Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.collectionVariables.set('documentId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/documents",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My New Document\"\n}"
+            }
+          },
+          "description": "Creates a blank document owned by the authenticated user. Saves the new id into `documentId`."
+        },
+        {
+          "name": "Get Document",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/documents/{{documentId}}"
+          }
+        },
+        {
+          "name": "Update Document (rename)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/documents/{{documentId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Renamed Document\"\n}"
+            }
+          },
+          "description": "Owner only. Title and/or content may be updated in the same PATCH."
+        },
+        {
+          "name": "Update Document (content / autosave)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/documents/{{documentId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": {\n    \"type\": \"doc\",\n    \"content\": [\n      {\n        \"type\": \"paragraph\",\n        \"content\": [\n          { \"type\": \"text\", \"text\": \"Hello world\", \"marks\": [{ \"type\": \"bold\" }] }\n        ]\n      }\n    ]\n  }\n}"
+            }
+          },
+          "description": "Owner or edit-permission collaborator. Content is Tiptap JSON. Requires edit access; 403 for view-only."
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/documents/{{documentId}}"
+          },
+          "description": "Owner only. Cascades to any DocumentShare rows."
+        },
+        {
+          "name": "Import File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.collectionVariables.set('documentId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/documents/import",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            }
+          },
+          "description": "Attach a .txt or .md file (max 2MB) under the 'file' form field. Creates a new owned document from the parsed content."
+        }
+      ]
+    },
+    {
+      "name": "Sharing",
+      "item": [
+        {
+          "name": "Share Document",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/documents/{{documentId}}/share",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{otherUserEmail}}\",\n  \"permission\": \"edit\"\n}"
+            }
+          },
+          "description": "Owner only. permission is \"view\" or \"edit\". Upserts if already shared with that user."
+        },
+        {
+          "name": "List Shares",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/documents/{{documentId}}/shares"
+          },
+          "description": "Owner only. Returns everyone the document is currently shared with."
+        },
+        {
+          "name": "Revoke Share",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/documents/{{documentId}}/share/{{otherUserId}}"
+          },
+          "description": "Owner only. Removes the given user's access."
+        }
+      ]
+    }
+  ]
+}
