@@ -41,6 +41,18 @@ npm run dev                 # starts on http://localhost:5173
 
 Open http://localhost:5173, pick a seeded user, and log in.
 
+## Local setup with Docker
+
+Alternative to the manual npm setup above — builds both services with multi-stage Dockerfiles (Docker layer caching makes repeat builds fast since `npm ci` only reruns when `package.json`/`package-lock.json` change).
+
+```bash
+docker compose build
+docker compose up -d
+docker compose exec server npx tsx prisma/seed.ts   # seed on first run
+```
+
+Server: http://localhost:4000, Client: http://localhost:5173. SQLite data persists in the `server-data` named volume across restarts (`docker compose down -v` to wipe it). Stop with `docker compose down`.
+
 ## Supported file import types
 
 Only `.txt` and `.md` files (max 2MB) can be imported. Markdown headings, bold/italic, and bullet/numbered lists are converted to the equivalent rich-text formatting; plain text is imported as one paragraph per line. Any other file type is rejected with an error message in the UI.

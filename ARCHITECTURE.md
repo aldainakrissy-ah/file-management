@@ -2,7 +2,7 @@
 
 ## Priority
 
-This was built as a timeboxed take-home. The goal was a coherent, fully working vertical slice — every core requirement (create/edit/rename/save, rich-text formatting, file import, sharing, persistence) working end-to-end and demonstrable live — rather than partial coverage of a larger feature set.
+The goal was a coherent, fully working vertical slice — every core requirement (create/edit/rename/save, rich-text formatting, file import, sharing, persistence) working end-to-end and demonstrable live — rather than partial coverage of a larger feature set.
 
 ## Key decisions
 
