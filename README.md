@@ -2,8 +2,7 @@
 
 A lightweight, Google-Docs-inspired collaborative document editor: create, edit, rename, and share rich-text documents, with `.txt`/`.md` file import and autosave.
 
-**Live demo:** https://file-management-ebon.vercel.app/login
-
+**Live demo:** https://file-management-ebon.vercel.app
 ## Stack
 
 - **Server**: Node + Express + TypeScript, Prisma ORM, SQLite, JWT auth (mocked login), Jest + Supertest.
