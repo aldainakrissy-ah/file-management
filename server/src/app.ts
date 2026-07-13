@@ -10,9 +10,13 @@ import { errorHandler } from "./middleware/errorHandler";
 export function createApp() {
   const app = express();
 
+  const allowedOrigins = process.env.CLIENT_ORIGIN?.split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
   app.use(
     cors({
-      origin: process.env.CLIENT_ORIGIN?.split(",") ?? "*",
+      origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : "*",
     })
   );
   app.use(express.json());
